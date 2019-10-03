@@ -1,0 +1,71 @@
+#Create the Kube-Enforcer Service
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: aqua
+  labels:
+    app: aqua-kube-enforcer
+  name: aqua-kube-enforcer
+spec:
+  ports:
+    - port: 443
+      targetPort: 443
+  selector:
+    app: aqua-kube-enforcer
+---
+#Create the Kube-Enforcer deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aqua-kube-enforcer
+  namespace: aqua
+spec:
+  replicas: 1
+  selector:
+     matchLabels:
+       app: aqua-kube-enforcer
+  template:
+    metadata:
+      labels:
+        app: aqua-kube-enforcer
+    spec:
+      imagePullSecrets:
+      - name: aqua-registry
+      serviceAccount: aqua-sa
+      restartPolicy: Always
+      containers:
+      - name: aqua-kube-enforcer
+        image: registry.aquasec.com/kube-enforcer:4.2
+        ports:
+          - containerPort: 443
+        env:
+        - name: "USERNAME"
+          valueFrom:
+            secretKeyRef:
+              name: "kube-enforcer-connection"
+              key: "aqua_username"
+        - name: "PASSWORD"
+          valueFrom:
+            secretKeyRef:
+              name: "kube-enforcer-connection"
+              key: "aqua_password"
+        - name: "AQUA_SERVER_URL"
+          valueFrom:
+             secretKeyRef:
+               name: "kube-enforcer-connection"
+               key: "aqua_url"
+        - name: "AQUA_ENABLE_CACHE"
+          value: "no"
+        - name: "AQUA_CACHE_EXPIRATION_PERIOD"
+          value: "60"
+        - name: TLS_SERVER_CERT_FILEPATH
+          value: /certs/server.crt
+        - name: TLS_SERVER_KEY_FILEPATH
+          value: /certs/server.key
+        volumeMounts:
+        - name: "certs"
+          mountPath: "/certs"
+      volumes:
+      - name: "certs"
+        secret:
+          secretName: "kube-enforcer-certs"
