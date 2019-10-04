@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  namespace: aqua
+  namespace: aqua-security
   labels:
     app: aqua-kube-enforcer
   name: aqua-kube-enforcer
@@ -18,7 +18,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: aqua-kube-enforcer
-  namespace: aqua
+  namespace: aqua-security
 spec:
   replicas: 1
   selector:
@@ -31,7 +31,7 @@ spec:
     spec:
       imagePullSecrets:
       - name: aqua-registry
-      serviceAccount: aqua-sa
+      serviceAccount: aqua
       restartPolicy: Always
       containers:
       - name: aqua-kube-enforcer
